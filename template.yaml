@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  my-lambda
+  Sample SAM Template for my-lambda
+
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+
+  # ✅ S3 Bucket
+  MyBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: my-lambda-demo-bucket-123   # ⚠️ must be globally unique
+
+  # ✅ Lambda Function
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello_world/
+      Handler: app.lambda_handler
+      Runtime: python3.10
+      Architectures:
+        - x86_64
+
+      # ✅ Permission to write to S3
+      Policies:
+        - S3WritePolicy:
+            BucketName: !Ref MyBucket
+
+      # ✅ Pass bucket name to Lambda
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref MyBucket
+
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: get
+
+Outputs:
+  HelloWorldApi:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/hello/"
+
+  HelloWorldFunction:
+    Description: "Lambda ARN"
+    Value: !GetAtt HelloWorldFunction.Arn
